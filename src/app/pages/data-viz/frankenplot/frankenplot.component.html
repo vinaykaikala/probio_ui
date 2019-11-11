@@ -1,0 +1,319 @@
+
+<div class="row">
+  <div class="col-md-12">
+    <nb-card class="">
+      <nb-card-header>
+        Franken Plots
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="button-container">
+              <input (click)="igv_load_session('igv_session_sv.xml')"  [disabled]="!show_plots_panel" icon="nb-loop-circled" class="fa-pull-right" nbButton type="button" value="Load IGV Session For Structural Variants"/>
+            </div>
+            <div class="button-container">
+              <input (click)="igv_load_session('igv_session_snps.xml')" [disabled]="!show_plots_panel" icon="nb-loop-circled" class="fa-pull-right" nbButton type="button" value="Load IGV Session For SNPs"/>
+            </div>
+          </div>
+          <br>
+        </div>
+
+      </nb-card-header>
+      <nb-card-body>
+        <div class="row  mt-1" >
+
+          <div class="col-lg-2 col-sm-12 col-md-2">
+            <ngx-select-dropdown  [config]="config_project" [options]="options_project" (change)="selectionChangedProject($event)"
+                                  [(ngModel)]="project_dataModel" [multiple]="false" ></ngx-select-dropdown>
+          </div>
+          <div class="col-lg-4 col-sm-12 col-md-4">
+            <ngx-select-dropdown *ngIf="options.length > 0" [config]="config" [options]="options" (change)="selectionChanged($event)"
+                                  [(ngModel)]="dataModel" [multiple]="false" ></ngx-select-dropdown>
+          </div>
+          <div class="col-lg-6 col-sm-12 col-md-6">
+            <ngx-select-dropdown *ngIf="options_capture.length > 0" [config]="config_capture" [options]="options_capture"
+                                 (change)="selectionChangedCapture($event)" [(ngModel)]="capture_dataModel" [multiple]="false" ></ngx-select-dropdown>
+          </div>
+        </div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>
+
+<div class="col-md-12" *ngIf="show_plots_panel">
+  <nb-card>
+    <nb-tabset fullWidth>
+      <nb-tab tabTitle="Structural Variant">
+        <div *ngIf="ngx_data.length > 0">
+          <!--<ng2-smart-table [settings]="settings" [source]="source">
+          </ng2-smart-table>-->
+          <ngx-table [configuration]="configuration"
+                     [data]="ngx_data"
+                     [columns]="columns"
+                     (click) = "igv_goto_locus($event)"
+                     (event) = "igv_event_emitter($event)">
+          </ngx-table>
+        </div>
+        <div  *ngIf="ngx_data.length == 0" [innerHTML]="table_loading_error_data['structural_variants']">
+        </div>
+      </nb-tab>
+      <nb-tab tabTitle="Somatic Variants">
+        <div *ngIf="ngx_data_somatic.length > 0">
+          <!--<ng2-smart-table [settings]="settings_somatic" [source]="source_somatic" >
+          </ng2-smart-table>-->
+          <div class="row mt-1">
+            <div class="col-12">
+              <input (click)="saveIGVFile('somatic')"  [disabled]="!save_somatic_status"
+                     icon="nb-loop-circled" class="fa-pull-right" nbButton type="button" value="Save"/>
+            </div>
+          </div>
+          <div class="row mt-3 ">
+            <ngx-table [configuration]="configuration"
+                       [data]="ngx_data_somatic"
+                       [columns]="columns_somatic"
+                       (click) = "igv_goto_locus($event)"
+                       (event) = "igv_event_emitter($event)"
+                       >
+            </ngx-table>
+          </div>
+        </div>
+        <div  *ngIf="ngx_data_somatic.length == 0" [innerHTML]="table_loading_error_data['somatic_variants']">
+        </div>
+      </nb-tab>
+      <nb-tab tabTitle="Germline Variants">
+        <div *ngIf="ngx_data_germline.length > 0">
+          <!--<ng2-smart-table [settings]="settings_germline" [source]="source_germline" >
+          </ng2-smart-table>-->
+          <div class="row ">
+            <div class="col-12">
+              <input (click)="saveIGVFile('germline')"  [disabled]="!save_germline_status"
+                     icon="nb-loop-circled" class="fa-pull-right" nbButton type="button" value="Save"/>
+            </div>
+          </div>
+          <div class="row mt-3 ">
+            <ngx-table [configuration]="configuration"
+                       [data]="ngx_data_germline"
+                       [columns]="columns_germline"
+                       (click) = "igv_goto_locus($event)"
+                       (event) = "igv_event_emitter($event)" >
+            </ngx-table>
+          </div>
+        </div>
+        <div *ngIf="ngx_data_germline.length == 0" [innerHTML]="table_loading_error_data['germline_variants']">
+        </div>
+      </nb-tab>
+      <nb-tab tabTitle="Franken Plot">
+        <ngx-image-viewer [src]="franken_images_url_list"
+                          [config]="image_config"
+                          [ngClass]="spinner_container">
+        </ngx-image-viewer>
+      </nb-tab>
+      <nb-tab tabTitle="Interactive Franken Plot"  >
+        <div class="row">
+          <br>
+          <div class="col-md-6" *ngIf="!(plot_data['snpratio'] && plot_data['density'])">
+            Please wait while loading the interactive plots .....
+          </div>
+        </div>
+        <div class="row">
+          <br>
+          <div class="col-md-6" *ngIf="plot_data['snpratio'] && plot_data['density']">
+            <ngx-select-dropdown  [config]="geneConfig" [options]="geneOptions" (change)="selectionChangedGene($event)"
+                                  [(ngModel)]="geneDataModel" [multiple]="false"  ></ngx-select-dropdown>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-9  col-lg-9 col-xl-9" >
+            <br>
+            <plotly-plot *ngIf="plot_data['snpratio'] && plot_data['density']" [data]="plot_data['snpratio'].data" [layout]="plot_data['snpratio'].layout"
+                         [config]="{responsive: true, scrollZoom: true, transition: {duration: 500, easing: 'cubic-in-out'}}" (selected)="onplotSelection($event)"
+                         (animated)="onPlotAnimate($event)" [revision]="franken_plot_revision" (relayout)="relayout($event)" ></plotly-plot>
+          </div>
+          <div class="col-md-3  col-lg-3 col-xl-3">
+            <br>
+            <div class="row">
+              <div class="col-sm-12 col-md-12">
+                <plotly-plot *ngIf="plot_data['snpratio'] && plot_data['density']"  [data]="plot_data['density'].data" [layout]="plot_data['density'].layout"
+                             [config]="{responsive: true, scrollZoom: true, transition: {duration: 500, easing: 'cubic-in-out'}}"></plotly-plot>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nb-tab>
+      <!--<nb-tab tabTitle="IGV">
+        <div #myDiv></div>
+      </nb-tab>-->
+    </nb-tabset>
+  </nb-card>
+</div>
+
+<!--
+ Edit buttons for germline and somatic tables
+ -->
+<ng-template #actionTpl let-row let-rowIndex="rowIndex">
+  <div *ngIf="editRow !== rowIndex" class="btn-sm btn-primary" (click)="edit(rowIndex)">Edit</div>
+  <div *ngIf="editRow === rowIndex" class="btn-sm btn-primary" (click)="update('germline')">Save</div>
+</ng-template>
+
+<ng-template #actionSomaticTpl let-row let-rowIndex="rowIndex">
+  <div *ngIf="editRow_somatic !== rowIndex" class="btn-sm btn-primary" (click)="edit_somatic(rowIndex)">Edit</div>
+  <div *ngIf="editRow_somatic === rowIndex" class="btn-sm btn-primary" (click)="update('somatic')">Save</div>
+</ng-template>
+
+<ng-template #germLineTag  let-row let-rowIndex="rowIndex">
+  <div *ngIf="editRow !== rowIndex">{{row.TAG}}</div>
+  <div *ngIf="editRow === rowIndex">
+    <div class="form-group">
+      <select class="form-select custom-select-sm" #gtag >
+        <option></option>
+        <option title="Adjacent Indel, variant likely due to misalignment of an adjacent indel">AI</option>
+        <option title="Ambiguous Other, Provide an explanation not otherwise specified here">AO</option>
+        <option title="Directional reads, Majority of reads are in the same direction">D</option>
+        <option title="DiNucleotide run, Region contains pattern of repeat ex. AGAGAG">DN</option>
+        <option title="End of reads, Variant only supportted by the end of reads">E</option>
+        <option title="High Discrepancy Region, Region contain many reads with multiple mismatches">HDR</option>
+        <option title="Low Coverage in Normal, Region contains low coverage in normal">LCN</option>
+        <option title="Low Mapping quality, Reads are poorly mapped">LM</option>
+        <option title="Low Variant Allele Frequency, Variant has a low VAF">LVF</option>
+        <option title="Low Coverage in Tumor, Region contains low coverage in tumor">LCT</option>
+        <option title="Multiple Mismatches, Read contains multiple mismatches from referencence">MM</option>
+        <option title="MonoNucleotide run, Region contains pattern of repeat ex. AAAAAA">MN</option>
+        <option title="Multiple Variants, More than 1 non-reference variant at the same base location">MV</option>
+        <option title="No Coverage in Normal, Region contains no coverage in normal">NCN</option>
+        <option title="Short Insert, Reads contain short inserts">SI</option>
+        <option title="Short Insert Only,  Reads contain only short inserts">SIO</option>
+        <option title="Same Start/END,  Short reads have same start or end points">SSE</option>
+        <option title="Tumor in Normal, Variant support in normal (common in blood cancers)">TN</option>
+        <option title="Tandem Repeat, Region contains pattern of repeat ex. ACGACGACG">TR</option>
+      </select>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #germLineCall  let-row let-rowIndex="rowIndex">
+  <div *ngIf="editRow !== rowIndex">{{row.CALL}}</div>
+  <div *ngIf="editRow === rowIndex">
+    <div class="form-group">
+      <select class="form-select custom-select-sm" #gcall >
+        <option></option>
+        <option title="Somatic, Variant is a real somatic varinat">S</option>
+        <option title="GermLine, Variant is a real germline varinat">G</option>
+        <option title="Ambiguous Varinat cloud or cloud not real">A</option>
+        <option title="Fail, Variant failed manual review">F</option>
+      </select>
+    </div>
+  </div>
+</ng-template>
+
+
+<ng-template  #somaticTag let-row let-rowIndex="rowIndex">
+  <div *ngIf="editRow_somatic !== rowIndex">{{row.Tags}}</div>
+  <div *ngIf="editRow_somatic === rowIndex">
+    <div class="form-group">
+      <select class="form-select custom-select-sm" #stag >
+        <option></option>
+        <option title="Adjacent Indel, variant likely due to misalignment of an adjacent indel">AI</option>
+        <option title="Ambiguous Other, Provide an explanation not otherwise specified here">AO</option>
+        <option title="Directional reads, Majority of reads are in the same direction">D</option>
+        <option title="DiNucleotide run, Region contains pattern of repeat ex. AGAGAG">DN</option>
+        <option title="End of reads, Variant only supportted by the end of reads">E</option>
+        <option title="High Discrepancy Region, Region contain many reads with multiple mismatches">HDR</option>
+        <option title="Low Coverage in Normal, Region contains low coverage in normal">LCN</option>
+        <option title="Low Mapping quality, Reads are poorly mapped">LM</option>
+        <option title="Low Variant Allele Frequency, Variant has a low VAF">LVF</option>
+        <option title="Low Coverage in Tumor, Region contains low coverage in tumor">LCT</option>
+        <option title="Multiple Mismatches, Read contains multiple mismatches from referencence">MM</option>
+        <option title="MonoNucleotide run, Region contains pattern of repeat ex. AAAAAA">MN</option>
+        <option title="Multiple Variants, More than 1 non-reference variant at the same base location">MV</option>
+        <option title="No Coverage in Normal, Region contains no coverage in normal">NCN</option>
+        <option title="Short Insert, Reads contain short inserts">SI</option>
+        <option title="Short Insert Only,  Reads contain only short inserts">SIO</option>
+        <option title="Same Start/END,  Short reads have same start or end points">SSE</option>
+        <option title="Tumor in Normal, Variant support in normal (common in blood cancers)">TN</option>
+        <option title="Tandem Repeat, Region contains pattern of repeat ex. ACGACGACG">TR</option>
+      </select>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template  #somaticCall let-row let-rowIndex="rowIndex">
+  <div *ngIf="editRow_somatic !== rowIndex">{{row.Call}}</div>
+  <div *ngIf="editRow_somatic === rowIndex">
+    <div class="form-group">
+      <select class="form-select custom-select-sm" #scall >
+        <option></option>
+        <option title="Somatic, Variant is a real somatic varinat">S</option>
+        <option title="GermLine, Variant is a real germline varinat">G</option>
+        <option title="Ambiguous Varinat cloud or cloud not real">A</option>
+        <option title="Fail, Variant failed manual review">F</option>
+      </select>
+    </div>
+  </div>
+</ng-template>
+
+
+<ng-template #somaticNotes let-row let-rowIndex="rowIndex">
+  <div *ngIf="editRow_somatic !== rowIndex">{{row.Notes}}</div>
+  <div *ngIf="editRow_somatic === rowIndex">
+    <input type="text"
+           #notes_somatic
+           placeholder="Notes"
+           class="form-label"
+           [value]="row.Notes">
+  </div>
+</ng-template>
+
+<ng-template #germLineNotes let-row let-rowIndex="rowIndex">
+  <div *ngIf="editRow !== rowIndex">{{row.NOTES}}</div>
+  <div *ngIf="editRow === rowIndex">
+    <input type="text"
+           #notes_germline
+           placeholder="Notes"
+           class="form-label"
+           [value]="row.NOTES">
+  </div>
+</ng-template>
+
+
+
+
+
+<!--<div class="row" *ngIf="plot_data['plot_AR'] && plot_data['variant_allelic']">
+  <div class="col-sm-12 col-md-6 col-lg-6">
+    <nb-card-header>
+      Plot1
+    </nb-card-header>
+    <nb-card-body *ngIf="!plot_data['plot_AR'].error">
+      <plotly-plot [data]="plot_data['plot_AR'].data.data" [layout]="plot_data['plot_AR'].data.layout"></plotly-plot>
+    </nb-card-body>
+    <nb-card-body *ngIf="plot_data['plot_AR'].error">
+      Unable plot .....
+    </nb-card-body>
+  </div>
+  <div class="col-sm-12 col-md-6 col-lg-6">
+    <nb-card-header>
+      Plot2
+    </nb-card-header>
+    <nb-card-body *ngIf="!plot_data['variant_allelic'].error">
+      <plotly-plot [data]="plot_data['variant_allelic'].data.data" [layout]="plot_data['variant_allelic'].data.layout"></plotly-plot>
+    </nb-card-body>
+    <nb-card-body *ngIf="plot_data['variant_allelic'].error">
+      Unable plot .....
+    </nb-card-body>
+  </div>
+</div>
+
+<div class="row" *ngIf="plot_data['snpratio']">
+  <div class="col-sm-12 col-md-12 col-lg-12">
+    <nb-card-header>
+      Plot3
+    </nb-card-header>
+    <nb-card-body *ngIf="!plot_data['snpratio'].error">
+      <plotly-plot [data]="plot_data['snpratio'].data.data" [layout]="plot_data['snpratio'].data.layout"></plotly-plot>
+    </nb-card-body>
+    <nb-card-body *ngIf="plot_data['snpratio'].error">
+      Unable plot .....
+    </nb-card-body>
+  </div>
+</div>
+-->
+
+

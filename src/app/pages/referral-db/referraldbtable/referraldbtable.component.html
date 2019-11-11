@@ -1,0 +1,120 @@
+<div class="row">
+  <div class="col-md-12">
+    <nb-card class="">
+      <nb-card-header>
+        Referral DB: {{project_name}}
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="button-container">
+              <input (click)="update_referraldb()"   [disabled]="referal_update_status"  icon="nb-loop-circled" class="fa-pull-right" nbButton type="button" value="Update Referral DB"/>
+            </div>
+            <div class="button-container">
+              <input (click)="refresh_table()" [disabled]="referal_update_status" icon="nb-loop-circled" class="fa-pull-right" nbButton type="button" value="Refresh"/>
+            </div>
+          </div>
+          <br>
+        </div>
+
+        <div class="row m-4" style="border-style: solid; border-width: 2px; border-color: #00c7c7">
+          <div class="col-2">
+            Group By:
+          </div>
+          <div class="col-10 m-2">
+            <nb-radio-group [(value)]="group_by">
+              <nb-radio
+                [value]="'pnr'">
+                pnr
+              </nb-radio>
+              <nb-radio
+                [value]="'datum'">
+                date
+              </nb-radio>
+              <nb-radio
+                [value]="'crid'">
+                crid
+              </nb-radio>
+              <nb-radio
+                [value]="'None'">
+                None
+              </nb-radio>
+            </nb-radio-group>
+          </div>
+        </div>
+
+      </nb-card-header>
+    </nb-card>
+  </div>
+</div>
+
+<div class="row" *ngIf="!referal_update_status">
+  <div class="row" *ngIf="group_by == 'None'">
+    <div class="col-sm-12 col-12">
+      <nb-card>
+        <nb-tabset fullWidth>
+          <nb-tab tabTitle="Referral Data">
+            <ngx-table  [configuration]="configuration_no_row_group"
+                        [data]="ngx_data"
+                        [columns]="columns"> </ngx-table>
+          </nb-tab>
+        </nb-tabset>
+      </nb-card>
+    </div>
+  </div>
+
+
+  <div class="row" *ngIf="group_by != 'None'" >
+    <div class="col-sm-12 col-12">
+      <nb-card>
+        <nb-tabset fullWidth>
+          <nb-tab tabTitle="Referral Data">
+
+            <ngx-table [configuration]="configuration"
+                       [data]="ngx_data"
+                       [toggleRowIndex]="toggleRowIndex"
+                       [groupRowsHeaderTemplate]="groupRowsHeaderTemplateRef"
+                       [groupRowsBy]="group_by"
+                       [columns]="columns">
+            </ngx-table>
+          </nb-tab>
+        </nb-tabset>
+      </nb-card>
+    </div>
+  </div>
+</div>
+
+
+<div class="row" *ngIf="referal_update_status">
+    <nb-card>
+      Please wait while updating the referral db........
+    </nb-card>
+</div>
+
+
+
+
+
+
+
+<ng-template #groupRowsHeaderTemplateRef
+             let-total="total"
+             let-key="key"
+             let-value="value"
+             let-group="group"
+             let-index="index">
+
+  <td class="badge-success" >
+    Grouped By {{key}}: <strong>{{value}}</strong>
+  </td>
+  <td class="badge-success" >
+    Total Items: <strong>{{total}}</strong>
+  </td>
+  <td class="badge-primary" >
+    <button class="btn btn-sm btn-primary"
+            (click)="onRowClickEvent($event, index)">
+      <i class="icon icon-arrow-left"></i> Expand
+    </button>
+  </td>
+</ng-template>
+
+
+
